@@ -4,6 +4,8 @@ import { Button, Container, Title, Card, Column, Level, Table} from 'rbx';
 import Sidebar from "react-sidebar";
 import firebase from 'firebase/app';
 import 'firebase/database';
+import 'firebase/auth';
+import StyledFirebaseAuth from 'react-firebaseui/StyledFirebaseAuth';
 
 const firebaseConfig = {
   apiKey: "AIzaSyCp8f6uJppp1EdSoGbIX7WPlkInCNaeQcA",
@@ -24,6 +26,17 @@ const Filler = ({}) => (
 );
 
 
+ const uiConfig = {
+  signInFlow: 'popup',
+  signInOptions: [
+    firebase.auth.GoogleAuthProvider.PROVIDER_ID
+  ],
+  callbacks: {
+    signInSuccessWithAuthResult: () => false
+  }
+};
+
+
 var cartOverlayStyle = {
   visibility: 'hidden'
 };
@@ -33,9 +46,9 @@ const App = () => {
   const [cartOpen, setCartOpen] = useState(false);
   const [cartContents, setCartContents] = useState([]);
   const [inventory, setInventory] = useState({});
+  const [user, setUser] = useState(false);
   const products = Object.values(data);
   const inventoryReal = Object.values(inventory);
-
 
   useEffect(() => {
     const handleData = snap => {
@@ -53,11 +66,15 @@ const App = () => {
     fetchProducts();
   }, []);
 
+  useEffect(() => {
+    firebase.auth().onAuthStateChanged(setUser);
+  }, []);
+
   console.log(inventory);
 
   return (
     <div>
-      <HeadBar state={{cartOpen, setCartOpen}}/>
+      <HeadBar state={{cartOpen, setCartOpen, user, setUser}}/>
       <Sidebar style={cartOverlayStyle} sidebar={<CartContent state={{cartOpen, setCartOpen, cartContents, setCartContents, inventory, setInventory}} />} test={cartContents} open={cartOpen}  styles={{ sidebar: { background: "white", position: "fixed" } }}/>
 
       <CardGrid products={products} state={{cartOpen, setCartOpen, inventory, setInventory, cartContents, setCartContents}} />
@@ -66,7 +83,6 @@ const App = () => {
 };
 
 
- 
 
 function totalCost(itemsArr) {
   var totalcost = 0;
@@ -251,8 +267,29 @@ const HeadBar = ({state}) => (
     <Level.Item>
       {CartOpenButton("Shopping Cart", 3, state)}
     </Level.Item>
+    <Level.Item style={{zIndex: 3}}>
+                    {state.user ? 
+              <React.Fragment>
+                <div style={{paddingRight:"15px"}}>
+                  Welcome, {state.user.displayName}
+                </div>
+                <Button primary onClick={() => firebase.auth().signOut()}>
+                  Log out
+                </Button> 
+              </React.Fragment>:
+              <StyledFirebaseAuth
+                uiConfig={uiConfig}
+                firebaseAuth={firebase.auth()}
+              /> }
+    </Level.Item>
   </Level>
 );
+
+function LoginButton(state) {
+  if(state.user === false)
+    return "hi";
+
+}
 
 const CardGrid = ({ products, state }) => ( 
   <Column.Group>
