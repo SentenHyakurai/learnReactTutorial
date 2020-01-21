@@ -25,15 +25,13 @@ const App = () => {
       const json = await response.json();
       setData(json);
     };
-    fetchProducts();
-  }, []);
-  useEffect(() => {
-    const fetchInventory = async () => {
-      const response = await fetch('./data/inventory.json');
-      const json = await response.json();
-      setInventory(json);
+    const fetchInv = async () => {
+      const responseI = await fetch('./data/inventory.json');
+      const jsonI = await responseI.json();
+      setInventory(jsonI);
     };
-    fetchInventory();
+    fetchInv();
+    fetchProducts();
   }, []);
 
   console.log(inventory);
@@ -222,6 +220,7 @@ function CartCloseButton(text, state) {
 }
 
 function CartAddButton(text, charZIndex, state, item, size) {
+  console.log("it me add button");
   function handleClick(e) {
     e.preventDefault();
     state.setCartContents(addCartContents(state.cartContents, item, true, size));
@@ -287,7 +286,6 @@ const OutStockButton = ({}) => (
 );
 
 function switchCartAddButton(label, zIndex, state, item, size) {
-  console.log(state.inventory);
   if(typeof(state.inventory[sku]) === undefined)
     return;
   if(state.inventory[sku] == null)
@@ -300,8 +298,10 @@ function switchCartAddButton(label, zIndex, state, item, size) {
         if(state.inventory[sku]["L"] === 0)
           if(state.inventory[sku]["XL"] === 0)
             return OutStockButton;
+
   if(state.inventory[sku][size] === 0)
     return;
+  console.log("returning addbutton");
   return CartAddButton(label, 0, state, item, size);
 }
 
