@@ -7,15 +7,18 @@ const Filler = ({}) => (
   <div>test</div>
 );
 
+
 var cartOverlayStyle = {
   visibility: 'hidden'
 };
 
 const App = () => {
   const [data, setData] = useState({});
-  const [cartOpen, setCartOpen] = useState(true);
-  const [cartContents, setCartContents] = useState([{"title": "Tso 3D Short Sleeve T-Shirt A", "price": 10.9, "count": 2, "size": "XL"}, {"title": "Tso 3D Short Sleeve T-Shirt A", "price": 10.9, "count": 2, "size": "M"}]);
+  const [cartOpen, setCartOpen] = useState(false);
+  const [cartContents, setCartContents] = useState([]);
+  const [inventory, setInventory] = useState({});
   const products = Object.values(data);
+  const inventoryReal = Object.values(inventory);
   useEffect(() => {
     const fetchProducts = async () => {
       const response = await fetch('./data/products.json');
@@ -24,15 +27,23 @@ const App = () => {
     };
     fetchProducts();
   }, []);
+  useEffect(() => {
+    const fetchInventory = async () => {
+      const response = await fetch('./data/inventory.json');
+      const json = await response.json();
+      setInventory(json);
+    };
+    fetchInventory();
+  }, []);
 
-  //console.log(cartContents);
+  console.log(inventory);
 
   return (
     <div>
       <HeadBar state={{cartOpen, setCartOpen}}/>
-      <Sidebar style={cartOverlayStyle} sidebar={<CartContent state={{cartOpen, setCartOpen, cartContents, setCartContents}} />} test={cartContents} open={cartOpen}  styles={{ sidebar: { background: "white", position: "fixed" } }}/>
+      <Sidebar style={cartOverlayStyle} sidebar={<CartContent state={{cartOpen, setCartOpen, cartContents, setCartContents, inventory, setInventory}} />} test={cartContents} open={cartOpen}  styles={{ sidebar: { background: "white", position: "fixed" } }}/>
 
-      <CardGrid products={products} state={{cartOpen, setCartOpen, cartContents, setCartContents}} />
+      <CardGrid products={products} state={{cartOpen, setCartOpen, inventory, setInventory, cartContents, setCartContents}} />
     </div>
   );
 };
@@ -81,6 +92,7 @@ function CartItemCell(item, state) {
   function handleClick(e) {
     e.preventDefault();
     state.setCartContents(removeCartContents(state.cartContents, item, false));
+    state.setInventory(plusInventory(state.inventory, item.sku, item.size));
     state.setCartOpen(false);
   }
 
@@ -139,6 +151,54 @@ function addCartContents(contents, item, operation, size) {
 
 }
 
+function minusInventory(inventory, sku, size) {
+  var localInventory = inventory;
+
+  switch(size) {
+    case "S":
+      localInventory[sku]["S"] = localInventory[sku]["S"]-1;
+      break;
+    case "M":
+      localInventory[sku]["M"] = localInventory[sku]["M"]-1;
+      break;
+    case "L":
+      localInventory[sku]["L"] = localInventory[sku]["L"]-1;
+      break;
+    case "XL":
+      localInventory[sku]["XL"] = localInventory[sku]["XL"]-1;
+      break;
+    default:
+      break;
+  }
+
+  return localInventory;
+  
+}
+
+function plusInventory(inventory, sku, size) {
+  var localInventory = inventory;
+
+  switch(size) {
+    case "S":
+      localInventory[sku]["S"] = localInventory[sku]["S"]+1;
+      break;
+    case "M":
+      localInventory[sku]["M"] = localInventory[sku]["M"]+1;
+      break;
+    case "L":
+      localInventory[sku]["L"] = localInventory[sku]["L"]+1;
+      break;
+    case "XL":
+      localInventory[sku]["XL"] = localInventory[sku]["XL"]+1;
+      break;
+    default:
+      break;
+  }
+
+  return localInventory;
+  
+}
+
 function CartOpenButton(text, charZIndex, state) {
   function handleClick(e) {
     e.preventDefault();
@@ -165,6 +225,7 @@ function CartAddButton(text, charZIndex, state, item, size) {
   function handleClick(e) {
     e.preventDefault();
     state.setCartContents(addCartContents(state.cartContents, item, true, size));
+    state.setInventory(minusInventory(state.inventory, item.sku, size));
     state.setCartOpen(true);
   }
 
@@ -210,13 +271,38 @@ const ItemCard = ({ item, state }) => (
     </Card.Content>
     <Card.Footer>
       <Button.Group>
-        {CartAddButton("S", 0, state, item, "S")}
-        {CartAddButton("M", 0, state, item, "M")}
-        {CartAddButton("L", 0, state, item, "L")}
-        {CartAddButton("XL", 0, state, item, "XL")}
+        <React.Fragment>
+        {switchCartAddButton("S", 0, state, item, "S")}
+        {switchCartAddButton("M", 0, state, item, "M")}
+        {switchCartAddButton("L", 0, state, item, "L")}
+        {switchCartAddButton("XL", 0, state, item, "XL")}
+        </React.Fragment>
       </Button.Group>
     </Card.Footer>
   </Card>
 );
+
+const OutStockButton = ({}) => (
+  <Button>"Out of stock"</Button>
+);
+
+function switchCartAddButton(label, zIndex, state, item, size) {
+  console.log(state.inventory);
+  if(typeof(state.inventory[sku]) === undefined)
+    return;
+  if(state.inventory[sku] == null)
+    return;
+  var sku = item.sku;
+  console.log(state.inventory);
+  if(label === "S")
+    if(state.inventory[sku]["S"] === 0)
+      if(state.inventory[sku]["M"] === 0)
+        if(state.inventory[sku]["L"] === 0)
+          if(state.inventory[sku]["XL"] === 0)
+            return OutStockButton;
+  if(state.inventory[sku][size] === 0)
+    return;
+  return CartAddButton(label, 0, state, item, size);
+}
 
 export default App;
