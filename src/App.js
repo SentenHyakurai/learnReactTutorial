@@ -2,6 +2,10 @@ import React, { useEffect, useState } from 'react';
 import 'rbx/index.css';
 import { Button, Container, Title, Card, Column} from 'rbx';
 
+const Filler = ({}) => (
+  <div>test</div>
+);
+
 const App = () => {
   const [data, setData] = useState({});
   const products = Object.values(data);
@@ -14,50 +18,32 @@ const App = () => {
     fetchProducts();
   }, []);
 
+  console.log(products.length);
+
   return (
-    <ul>
-      {products.map(product => <li key={product.sku}>{product.title}</li>)}
-    </ul>
+    <CardGrid products={products} />
   );
 };
 
-function splitData(data) {
-  var count = 0;
-  var col0 = [];
-  var col1 = [];
-  var col2 = [];
-  var col3 = [];
-  while(count < data.length) {
-    switch(count % 4) {
-      case 0:
-        col0.push(data[count]);
-      break;
-      case 1:
-        col1.push(data[count]);
-      break;
-      case 2:
-        col2.push(data[count]);
-      break;
-      case 3:
-        col3.push(data[count]);
-      break;
-      default:
-       console.log("There was a problem in splitData function");
-      break;
-    }
-  }
-
-  return [col0, col1, col2, col3];
-}
-
-const cardGrid = ({ cards }) => (
+const CardGrid = ({ products }) => ( 
   <Column.Group>
-    
+    {[4, 3, 2, 1].map(i => (
+      <Column key={i}>          
+        <ColumnContent cardsArr={products.slice(((products.length/4)*(i-1)), ((products.length/4)*(i)))} />
+      </Column>
+      )
+    )}
   </Column.Group>
 );
 
-const itemCard = ({ item }) => (
-  <Card>{ item }</Card>
+const ColumnContent = ({ cardsArr }) => (
+  <React.Fragment>
+    { cardsArr.map(obj => <ItemCard item={ obj } /> ) }
+  </React.Fragment>
+);
+
+const ItemCard = ({ item }) => (
+  <Title>{ item.title }</Title>
 );
 
 export default App;
