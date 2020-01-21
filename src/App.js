@@ -43,7 +43,23 @@ const ColumnContent = ({ cardsArr }) => (
 );
 
 const ItemCard = ({ item }) => (
-  <Title>{ item.title }</Title>
+  <Card style={{marginTop:"20px"}}>
+    <Card.Header />
+    <Card.Header.Title>{item.title}</Card.Header.Title>
+    <Card.Image><img src={require('../public/data/products/'+item.sku+'_1.jpg')} /></Card.Image>
+    <Card.Content>
+      {item.description}<br />
+      {'$'+item.price}
+    </Card.Content>
+    <Card.Footer>
+      <Button.Group>
+        <Button>S</Button>
+        <Button>M</Button>
+        <Button>L</Button>
+        <Button>XL</Button>
+      </Button.Group>
+    </Card.Footer>
+  </Card>
 );
 
 export default App;
