@@ -77,18 +77,11 @@ const CartContent = ({state}) => {
   );
 };
 
-const CartItem = ({item}) => (
-  <Table.Row>
-    <Table.Cell>
-      {item.title + ' ' + item.size + ' x' + item.count + ': $' + item.price*item.count}
-    </Table.Cell>
-  </Table.Row>
-);
-
 function CartItemCell(item, state) {
   var temp;
   function handleClick(e) {
     e.preventDefault();
+    console.log(item);
     state.setCartContents(removeCartContents(state.cartContents, item, false));
     state.setInventory(plusInventory(state.inventory, item.sku, item.size));
     state.setCartOpen(false);
@@ -112,7 +105,7 @@ function removeCartContents(contents, item, operation) {
     if(localItem.count > 1) {
       outArr = contents;
       index = outArr.indexOf(localItem);
-      outArr[index] = {"title": localItem.title, "price": localItem.price, "count": (localItem.count-1), "size": localItem.size};
+      outArr[index] = {"title": localItem.title, "price": localItem.price, "count": (localItem.count-1), "size": localItem.size, "sku": localItem.sku};
       return outArr;
     }
     if(localItem.count == 1) {
@@ -135,13 +128,13 @@ function addCartContents(contents, item, operation, size) {
     console.log(localItem);
     if(localItem === undefined) {
       outArr = contents;
-      outArr.push({"title": item.title, "price": item.price, "count": 1, "size": size});
+      outArr.push({"title": item.title, "price": item.price, "count": 1, "size": size, "sku": item.sku});
       return outArr;
     }
     if(localItem.count > 0) {
       outArr = contents;
       index = outArr.indexOf(localItem);
-      outArr[index] = {"title": localItem.title, "price": localItem.price, "count": (localItem.count+1), "size": size};
+      outArr[index] = {"title": localItem.title, "price": localItem.price, "count": (localItem.count+1), "size": size, "sku": item.sku};
       return outArr;
     }
   }
@@ -286,18 +279,19 @@ const OutStockButton = ({}) => (
 );
 
 function switchCartAddButton(label, zIndex, state, item, size) {
+
+  var sku = item.sku;
   if(typeof(state.inventory[sku]) === undefined)
     return;
   if(state.inventory[sku] == null)
     return;
-  var sku = item.sku;
   console.log(state.inventory);
   if(label === "S")
     if(state.inventory[sku]["S"] === 0)
       if(state.inventory[sku]["M"] === 0)
         if(state.inventory[sku]["L"] === 0)
           if(state.inventory[sku]["XL"] === 0)
-            return OutStockButton;
+            return "Out of stock";
 
   if(state.inventory[sku][size] === 0)
     return;
