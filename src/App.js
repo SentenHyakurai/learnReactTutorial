@@ -2,6 +2,22 @@ import React, { useEffect, useState } from 'react';
 import 'rbx/index.css';
 import { Button, Container, Title, Card, Column, Level, Table} from 'rbx';
 import Sidebar from "react-sidebar";
+import firebase from 'firebase/app';
+import 'firebase/database';
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCp8f6uJppp1EdSoGbIX7WPlkInCNaeQcA",
+  authDomain: "learnreact-2a7f9.firebaseapp.com",
+  databaseURL: "https://learnreact-2a7f9.firebaseio.com",
+  projectId: "learnreact-2a7f9",
+  storageBucket: "learnreact-2a7f9.appspot.com",
+  messagingSenderId: "212836049594",
+  appId: "1:212836049594:web:5ce6da4952920205591883"
+};
+
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database().ref();
 
 const Filler = ({}) => (
   <div>test</div>
@@ -19,18 +35,21 @@ const App = () => {
   const [inventory, setInventory] = useState({});
   const products = Object.values(data);
   const inventoryReal = Object.values(inventory);
+
+
+  useEffect(() => {
+    const handleData = snap => {
+      if (snap.val()) setInventory(snap.val());
+    }
+    db.on('value', handleData, error => alert(error));
+    return () => { db.off('value', handleData); };
+  }, []);
   useEffect(() => {
     const fetchProducts = async () => {
       const response = await fetch('./data/products.json');
       const json = await response.json();
       setData(json);
     };
-    const fetchInv = async () => {
-      const responseI = await fetch('./data/inventory.json');
-      const jsonI = await responseI.json();
-      setInventory(jsonI);
-    };
-    fetchInv();
     fetchProducts();
   }, []);
 
