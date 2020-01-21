@@ -7,7 +7,9 @@ const Filler = ({}) => (
   <div>test</div>
 );
 
-
+var cartOverlayStyle = {
+  visibility: 'hidden'
+};
 
 const App = () => {
   const [data, setData] = useState({});
@@ -15,7 +17,7 @@ const App = () => {
   const [cartContents, setCartContents] = useState([{"title": "Tso 3D Short Sleeve T-Shirt A", "price": 10.9, "count": 2, "size": "XL"}, {"title": "Tso 3D Short Sleeve T-Shirt A", "price": 10.9, "count": 2, "size": "M"}]);
   const products = Object.values(data);
   useEffect(() => {
-    const fetchProducts = async () => {s
+    const fetchProducts = async () => {
       const response = await fetch('./data/products.json');
       const json = await response.json();
       setData(json);
@@ -27,12 +29,16 @@ const App = () => {
 
   return (
     <div>
-      <HeadBar />
-      <Sidebar sidebar={<CartContent itemsArr={cartContents} />} open={cartOpen}  styles={{ sidebar: { background: "white" } }}/>
-      <CardGrid products={products} />
+      <HeadBar state={{cartOpen, setCartOpen}}/>
+      <Sidebar style={cartOverlayStyle} sidebar={<CartContent itemsArr={cartContents} state={{cartOpen, setCartOpen}} />} open={cartOpen}  styles={{ sidebar: { background: "white" } }}/>
+
+      <CardGrid products={products} state={{cartOpen, setCartOpen}} />
     </div>
   );
 };
+
+
+ 
 
 function totalCost(itemsArr) {
   var totalcost = 0;
@@ -40,7 +46,7 @@ function totalCost(itemsArr) {
   return totalcost.toString();
 }
 
-const CartContent = ({itemsArr}) => (
+const CartContent = ({itemsArr, state}) => (
     <div>
       <Title> Shopping Cart </Title>
       <Table>
@@ -55,6 +61,7 @@ const CartContent = ({itemsArr}) => (
             </Table.Row>
         </Table.Body>
       </Table>
+      {CartCloseButton("Close cart", state)}
     </div>
 );
 
@@ -66,33 +73,69 @@ const CartItem = ({item}) => (
   </Table.Row>
 );
 
-const HeadBar = ({}) => (
+function CartOpenButton(text, charZIndex, state) {
+  const [cartOpen, setCartOpen] = useState();
+  function handleClick(e) {
+    e.preventDefault();
+    state.setCartOpen(true);
+  }
+
+  return (
+    <Button style={{zIndex: charZIndex.toString()}} onClick={handleClick}>{text}</Button>
+  )
+}
+
+function CartCloseButton(text, state) {
+  const [cartOpen, setCartOpen] = useState();
+  function handleClick(e) {
+    e.preventDefault();
+    state.setCartOpen(false);
+  }
+
+  return (
+    <Button onClick={handleClick}>{text}</Button>
+  )
+}
+
+function CartAddButton(text, charZIndex, state, item, size) {
+  const [cartOpen, setCartOpen] = useState(true);
+  function handleClick(e) {
+    e.preventDefault();
+    state.setCartOpen(true);
+  }
+
+  return (
+    <Button style={{zIndex: charZIndex.toString()}} onClick={handleClick}>{text}</Button>
+  )
+}
+
+const HeadBar = ({state}) => (
 
   <Level>
     <Level.Item>
-      <Button>Shopping Cart</Button>
+      {CartOpenButton("Shopping Cart", 3, state)}
     </Level.Item>
   </Level>
 );
 
-const CardGrid = ({ products }) => ( 
+const CardGrid = ({ products, state }) => ( 
   <Column.Group>
     {[4, 3, 2, 1].map(i => (
       <Column key={i}>          
-        <ColumnContent cardsArr={products.slice(((products.length/4)*(i-1)), ((products.length/4)*(i)))} />
+        <ColumnContent state={state} cardsArr={products.slice(((products.length/4)*(i-1)), ((products.length/4)*(i)))} />
       </Column>
       )
     )}
   </Column.Group>
 );
 
-const ColumnContent = ({ cardsArr }) => (
+const ColumnContent = ({ cardsArr, state }) => (
   <React.Fragment>
-    { cardsArr.map(obj => <ItemCard item={ obj } /> ) }
+    { cardsArr.map(obj => <ItemCard item={ obj } state={state} /> ) }
   </React.Fragment>
 );
 
-const ItemCard = ({ item }) => (
+const ItemCard = ({ item, state }) => (
   <Card style={{marginTop:"20px"}}>
     <Card.Header />
     <Card.Header.Title>{item.title}</Card.Header.Title>
@@ -103,10 +146,10 @@ const ItemCard = ({ item }) => (
     </Card.Content>
     <Card.Footer>
       <Button.Group>
-        <Button>S</Button>
-        <Button>M</Button>
-        <Button>L</Button>
-        <Button>XL</Button>
+        {CartAddButton("S", 0, state, item, "S")}
+        {CartAddButton("M", 0, state, item, "M")}
+        {CartAddButton("L", 0, state, item, "L")}
+        {CartAddButton("XL", 0, state, item, "XL")}
       </Button.Group>
     </Card.Footer>
   </Card>
