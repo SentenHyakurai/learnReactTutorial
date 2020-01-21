@@ -25,14 +25,14 @@ const App = () => {
     fetchProducts();
   }, []);
 
-  console.log(products.length);
+  //console.log(cartContents);
 
   return (
     <div>
       <HeadBar state={{cartOpen, setCartOpen}}/>
-      <Sidebar style={cartOverlayStyle} sidebar={<CartContent itemsArr={cartContents} state={{cartOpen, setCartOpen}} />} open={cartOpen}  styles={{ sidebar: { background: "white" } }}/>
+      <Sidebar style={cartOverlayStyle} sidebar={<CartContent state={{cartOpen, setCartOpen, cartContents, setCartContents}} />} test={cartContents} open={cartOpen}  styles={{ sidebar: { background: "white", position: "fixed" } }}/>
 
-      <CardGrid products={products} state={{cartOpen, setCartOpen}} />
+      <CardGrid products={products} state={{cartOpen, setCartOpen, cartContents, setCartContents}} />
     </div>
   );
 };
@@ -46,24 +46,27 @@ function totalCost(itemsArr) {
   return totalcost.toString();
 }
 
-const CartContent = ({itemsArr, state}) => (
+const CartContent = ({state}) => {
+  console.log(state.cartContents);
+  return(
     <div>
       <Title> Shopping Cart </Title>
       <Table>
         <Table.Body>
           <React.Fragment>
-           { itemsArr.map(obj => <CartItem item={ obj } /> ) }
+           { state.cartContents.map(obj => CartItemCell(obj, state) ) }
           </React.Fragment>
             <Table.Row>
               <Table.Cell>
-                {'total price = $' + totalCost(itemsArr)}
+                {'total price = $' + totalCost(state.cartContents)}
               </Table.Cell>
             </Table.Row>
         </Table.Body>
       </Table>
       {CartCloseButton("Close cart", state)}
     </div>
-);
+  );
+};
 
 const CartItem = ({item}) => (
   <Table.Row>
@@ -73,8 +76,70 @@ const CartItem = ({item}) => (
   </Table.Row>
 );
 
+function CartItemCell(item, state) {
+  var temp;
+  function handleClick(e) {
+    e.preventDefault();
+    state.setCartContents(removeCartContents(state.cartContents, item, false));
+    state.setCartOpen(false);
+  }
+
+  return (
+  <Table.Row>
+    <Table.Cell onClick={handleClick}>
+      {item.title + ' ' + item.size + ' x' + item.count + ': $' + item.price*item.count}
+    </Table.Cell>
+  </Table.Row>
+  )
+}
+
+function removeCartContents(contents, item, operation) {
+  var localItem;
+  var outArr;
+  var index;
+  if(operation == false) {
+    localItem = contents.find(obj => ((obj.title === item.title) && (obj.size === item.size)));
+    if(localItem.count > 1) {
+      outArr = contents;
+      index = outArr.indexOf(localItem);
+      outArr[index] = {"title": localItem.title, "price": localItem.price, "count": (localItem.count-1), "size": localItem.size};
+      return outArr;
+    }
+    if(localItem.count == 1) {
+      outArr = contents;
+      index = outArr.indexOf(localItem);
+      outArr.splice(index, 1);
+      return outArr;
+    }
+  }
+  console.log("there was a major problem in alterCartContents");
+
+}
+
+function addCartContents(contents, item, operation, size) {
+  var localItem;
+  var outArr;
+  var index;
+  if(operation == true) {
+    localItem = contents.find(obj => ((obj.title === item.title) && (obj.size === size)));
+    console.log(localItem);
+    if(localItem === undefined) {
+      outArr = contents;
+      outArr.push({"title": item.title, "price": item.price, "count": 1, "size": size});
+      return outArr;
+    }
+    if(localItem.count > 0) {
+      outArr = contents;
+      index = outArr.indexOf(localItem);
+      outArr[index] = {"title": localItem.title, "price": localItem.price, "count": (localItem.count+1), "size": size};
+      return outArr;
+    }
+  }
+  console.log("there was a major problem in alterCartContents");
+
+}
+
 function CartOpenButton(text, charZIndex, state) {
-  const [cartOpen, setCartOpen] = useState();
   function handleClick(e) {
     e.preventDefault();
     state.setCartOpen(true);
@@ -86,7 +151,6 @@ function CartOpenButton(text, charZIndex, state) {
 }
 
 function CartCloseButton(text, state) {
-  const [cartOpen, setCartOpen] = useState();
   function handleClick(e) {
     e.preventDefault();
     state.setCartOpen(false);
@@ -98,9 +162,9 @@ function CartCloseButton(text, state) {
 }
 
 function CartAddButton(text, charZIndex, state, item, size) {
-  const [cartOpen, setCartOpen] = useState(true);
   function handleClick(e) {
     e.preventDefault();
+    state.setCartContents(addCartContents(state.cartContents, item, true, size));
     state.setCartOpen(true);
   }
 
